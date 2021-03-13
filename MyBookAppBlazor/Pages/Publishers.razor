@@ -1,0 +1,196 @@
+﻿@page "/publishers"
+@inject IPublisherService publisherService
+@using MyBookAppBlazor.Data
+@inject IJSRuntime JSRuntime
+
+<div class="col-12">
+    <h3><b>Enter Author Information</b></h3>
+    <hr />
+
+    @*<div id="divServerValidationss" class="col-10 alert alert-info">
+
+        </div>
+
+        This at the top was used with javascript initially to show message after submit but now replaced with Reusable component below
+          i.e <ReusableServerValidation></ReusableServerValidation>, so will go down and comment
+        the Javascript as well i.e await JSRuntime.InvokeVoidAsync("savePubMessage", publisherName);*@
+
+    @*<ServerValidation IsVisible="IsVisible" Result="Result">
+            <span>Publisher : </span> @RecordName
+        </ServerValidation>*@
+
+    <ReusableServerValidation IsVisible="IsVisible" Result="Result">
+        <span>Publisher : </span> @RecordName
+    </ReusableServerValidation>
+
+    <EditForm Model="@publisher" OnValidSubmit="SavePublisher">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="col-12 row">
+            <label class="col-2 font-weight-bold">first name :</label>
+
+            <input @ref="firstNameText" class="form-control col-3" @bind="publisher.Publisher_Name" placeholder="first name" />
+            @*change from inputText to input and bind-Value to bind in order to use reference for focussing on firstname after each submission*@
+            @*&nbsp;<ValidationMessage For="@(() => author.FirstName)" />*@
+        </div>
+        <br />
+
+
+        <!--<div class="col-12 row">
+            <label class="col-2 font-weight-bold">City :</label>
+            <SelectCity></SelectCity>-->
+
+
+
+            @*<label class="col-2 font-weight-bold">City :</label>
+                <InputSelect @bind-Value="publisher.City" class="form-control col-3">
+                    @if (Cities != null)
+                    {
+                        @foreach (var city in Cities)
+                        {
+                            <option value="@city">@city</option>
+                        }
+                    }
+                </InputSelect>*@
+
+        <!--</div>-->
+        <br />
+        <br />
+        <div class="col-12 row">
+            <span class="col-2"></span>
+            <input type="submit" class="form-control col-1 btn btn-primary" value="Save" />
+            <span class="col-2">&nbsp;</span>
+            <input type="submit" class="form-control col-1 btn btn-primary" value="Clear" />
+        </div>
+    </EditForm>
+</div>
+<br />
+
+
+
+<div class="col-10">
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>PublisherId</th>
+                <th>Publisher Name</th>
+                <th>Last Name</th>
+                @*<th>City</th>*@
+            </tr>
+        </thead>
+        <tbody>
+
+            @foreach (Publisher pub in PublisherList)
+            {
+                <tr>
+                    <td>
+                        <NavLink href="@string.Format("/author/authordetails/{0}", pub.PublisherId)">
+                            @pub.PublisherId
+                        </NavLink>
+                    </td>
+                    <td>@pub.Publisher_Name</td>
+                    @*<td>@pub.City</td>*@
+                    @*<td>@author.Salary</td>*@
+                    <td>
+                        @*<a style="text-underline-position:below; cursor:pointer;color:blue;font-weight:bold" @onclick="(() => DeleteAuthor(author.AuthorId))">Delete</a>|
+                            <a style="text-underline-position:below; cursor:pointer;color:blue;font-weight:bold" @onclick="(() => EditAuthor(author))">Edit</a>*@
+                    </td>
+                </tr>
+            }
+
+
+
+        </tbody>
+    </table>
+</div>
+
+
+
+@*<MatTable Items="@PublisherList"  Striped="true"  AllowSelection="true" RowClass="tester" class="mat-elevation-z5">
+    <MatTableHeader>
+        <th>PublisherId</th>
+        <th>Publisher Name</th>
+        <th>City</th>
+    </MatTableHeader>
+    <MatTableRow>
+        <td>@context.PublisherId</td>
+        <td>@context.Publisher_Name</td>
+        <td>@context.City</td>
+    </MatTableRow>
+</MatTable>*@
+
+
+<hr />
+
+
+
+@code{
+    public Publisher publisher;
+
+    private List<Publisher> PublisherList;
+
+    public string[] Cities;
+
+
+
+
+    public bool IsVisible { get; set; }
+
+    public string RecordName { get; set; }
+
+    public bool Result { get; set; }
+
+
+
+
+    ElementReference firstNameText;
+
+
+    #region Getting List of Authors
+    protected override async Task OnInitializedAsync()
+    {
+
+        publisher = new Publisher();
+        PublisherList = new List<Publisher>();
+
+        PublisherList = publisherService.GetPublishers();
+    }
+    #endregion
+
+
+    #region Saving Publisher
+    public async Task SavePublisher()
+    {
+
+        //Result = publisherService.SavePublisher(publisher);
+        Result = publisherService.SavePublisher(publisher);
+
+        IsVisible = true;
+
+        var publisherName = publisher.Publisher_Name;
+        RecordName = publisherName;
+        publisher = new Publisher();
+
+
+        //await JSRuntime.InvokeVoidAsync("savePubMessage", publisherName); we are using Reusable component now
+
+        //For HtmlInput Focus
+        await JSRuntime.InvokeVoidAsync("setFocusOnElement", firstNameText);
+    }
+    #endregion
+
+
+    #region Fetching Cities from Javascript
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Cities == null)
+        {
+            Cities = await JSRuntime.InvokeAsync<string[]>("getCities");
+
+            StateHasChanged();
+        }
+    }
+    #endregion
+
+}

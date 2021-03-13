@@ -1,0 +1,62 @@
+﻿
+@page "/signup"
+@using MyBookAppBlazor.Data
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+
+
+
+
+<EditForm Model="@user" OnValidSubmit="ValidateUser">
+    <div>
+        <br /><br /><br /><br />
+    </div>
+    <div>
+        <h3 style="font-weight:bold; color:purple">Book Stores Login</h3>
+    </div>
+    <div>
+        <br />
+    </div>
+    <div class="col-12 row">
+        <input class="form-control col-12" @bind="user.EmailAddress" placeholder="Enter Email Address" />
+    </div>
+    <div class="col-12 row">
+        <input type="password" class="form-control col-12" @bind="user.Password" placeholder="Enter Password" />
+    </div>
+    <div class="col-12 row">
+        <input type="password" class="form-control col-12" @bind="user.ConfirmPassword" placeholder="Confirm Password" />
+    </div>
+    <br />
+    <div class="col-12 row">
+        <span class="col-12"></span>
+        <input type="submit" class="form-control col-6 btn btn-primary" value="Sign Up" />
+    </div>
+</EditForm>
+
+
+@code {
+    private User user;
+    //private string LoginMessage;
+
+    protected override Task OnInitializedAsync()
+    {
+        user = new User();
+
+
+        return base.OnInitializedAsync();
+    }
+
+    public async Task<bool> ValidateUser()
+    {
+        //assume that user is valid
+        //call an API
+
+        ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(user.EmailAddress);
+        NavigationManager.NavigateTo("/index");
+        await sessionStorage.SetItemAsync("emailAddress", user.EmailAddress);
+
+        return await Task.FromResult(true);
+    }
+
+}

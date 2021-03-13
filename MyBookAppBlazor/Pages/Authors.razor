@@ -1,0 +1,307 @@
+﻿@page "/authors";
+@inject IAuthorService authorService;
+@using MyBookAppBlazor.Data;
+@using MyBookAppBlazor.Data.APIServices
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+@inject IAuthorApiService AuthorApiService
+
+
+<div class="col-12">
+    <h3><b>Enter Author Information</b></h3>
+    <hr />
+
+    @*<div id="divServerValidations" class="col-10 alert alert-info">
+
+        </div>*@
+    <!--<ServerValidation IsVisible="IsVisible" Result="Result">
+        <span>Publisher : </span> @RecordName
+    </ServerValidation>-->
+    @*This reusable component comes from the class library to replace the commented one below i.e ReusableServerValidation*@
+
+    <ReusableServerValidation IsVisible="IsVisible" Result="Result">
+        <span>Author : </span> @RecordName
+    </ReusableServerValidation>
+    @*passed in as html fragment to be used in the child component to pass the names from parent component*@
+
+    <EditForm Model="@author" OnValidSubmit="SaveAuthor">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="col-12 row">
+            <label class="col-2 font-weight-bold">first name :</label>
+
+            <input @ref="firstNameText" class="form-control col-3" @bind="author.FirstName" placeholder="first name" />@*change from inputText to input and bind-Value to bind in order to use reference for focussing on firstname after each submission*@
+            @*&nbsp;<ValidationMessage For="@(() => author.FirstName)" />*@
+        </div>
+        <br />
+        <div class="col-12 row">
+            <label class="col-2 font-weight-bold">last name :</label>
+            <InputText class="form-control col-3" @bind-Value="author.LastName" placeholder="last name" />
+            @*&nbsp;<ValidationMessage For="@(() => author.LastName)" />*@
+        </div>
+        <br />
+        <!--<div class="col-12 row">
+
+            <label class="col-2 font-weight-bold">City :</label>
+            <SelectCity></SelectCity>-->
+        @*Reusable Component for Cities placed in the external Lirary*@
+
+        <!--<label class="col-2 font-weight-bold">City :</label>
+        <InputSelect @bind-Value="author.City" class="form-control col-3">-->
+        <!---->-->
+        <!---->@*This has been replaced with the reusable component called SelectCity above*@-->
+        <!--@if (Cities != null)
+            {
+                @foreach (var city in Cities)
+                {
+                    <option value="@city">@city</option>
+                }
+            }
+        </InputSelect>-->
+        <!--</div>-->
+
+
+
+
+        <br />
+        <div class="col-12 row">
+
+            <label class="col-2 font-weight-bold">email address :</label>
+            <InputText class="form-control col-3" @bind-Value="author.EmailAddress" placeholder="Email Address" />
+            @*&nbsp;<ValidationMessage For="@(() => author.Email)" />*@
+        </div>
+        <br />
+        <div class="col-12 row">
+            <label class="col-2 font-weight-bold">salary :</label>
+            <InputNumber class="form-control col-3" @bind-Value="author.Salary" placeholder="Salary" />
+            @*&nbsp;<ValidationMessage For="@(() => author.Salary)" />*@
+        </div>
+        <br />
+        <div class="col-12 row">
+            <span class="col-2"></span>
+            <input type="submit" class="form-control col-1 btn btn-primary" value="Save" />
+            <span class="col-2">&nbsp;</span>
+            <input type="submit" class="form-control col-1 btn btn-primary" value="Clear" />
+        </div>
+    </EditForm>
+</div>
+<br />
+
+
+
+<div class="col-10">
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>AuthorId</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                @*<th>City</th>*@
+                <th>Email</th>
+                @*<th>Salary</th>*@
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            @foreach (Author author in AuthorList)
+            {
+            <tr>
+                <td>
+                    <NavLink href="@string.Format("/author/authordetails/{0}", author.AuthorId)">
+                        @author.AuthorId
+                    </NavLink>
+                </td>
+                <td>@author.FirstName</td>
+                <td>@author.LastName</td>
+                @*<td>@author.City</td>*@
+                <td>@author.EmailAddress</td>
+                @*<td>@author.Salary</td>*@
+                <td>
+                    <a style="text-underline-position:below; cursor:pointer;color:blue;font-weight:bold" @onclick="(() => DeleteAuthor(author.AuthorId))">Delete</a>|
+                    <a style="text-underline-position:below; cursor:pointer;color:blue;font-weight:bold" @onclick="(() => EditAuthor(author))">Edit</a>
+                </td>
+            </tr>
+            }
+
+
+
+        </tbody>
+    </table>
+</div>
+<hr />
+
+<div class="col-12 row">@authorService.GetCreateDate()</div>
+<div class="col-12 row">@authorService.GetVersion()</div>
+
+@code{
+    public Author author;
+
+    private List<Author> AuthorList;
+
+    public string[] Cities;
+
+    ElementReference firstNameText;
+
+
+
+    public bool IsVisible { get; set; } // for the reusable compoonent at the top, same ppty as in the child component
+
+    public string RecordName { get; set; }// this will be used to pass the firstName and LastName into the childCompoment i.e the ReusableComponent
+    public bool Result { get; set; }// used the check if there is any issue with API or result from database like internet or anything using the Reusable Validation componet(the child component here)
+
+
+
+    #region Getting List of Authors
+    protected override async Task OnInitializedAsync()
+    {
+
+        author = new Author();
+        AuthorList = new List<Author>();
+
+        //AuthorList = authorService.GetAuthors();
+        AuthorList = await AuthorApiService.GetAuthors();
+        AuthorList = AuthorList.OrderByDescending(auth => auth.AuthorId).ToList();
+    }
+    #endregion
+
+
+
+
+
+
+    #region
+
+    //protected override void OnInitialized()
+    //{
+    //    Console.WriteLine("Authors - OnInitializedAsync");
+    //    base.OnInitializedAsync();
+    //}
+
+    ////protected override void OnInitializedAsync()
+    ////{
+
+    ////}
+
+    //protected override void OnParametersSet()
+    //{
+    //    Console.WriteLine("Authors - OnParametersSet");
+    //    base.OnParametersSet();
+    //}
+    //protected override async Task OnParametersSetAsync()
+    //{
+    //    Console.WriteLine("Authors - OnParametersSetAsync");
+    //    await base.OnParametersSetAsync();
+    //}
+    //protected override void OnAfterRender(bool firstRender)
+    //{
+    //    Console.WriteLine("Authors - OnAfterRender");
+    //    base.OnAfterRender(firstRender);
+    //}
+    ////protected override async Task OnAfterRenderAsync(bool firstRender)
+    ////{
+    ////    Console.WriteLine("Authors - OnParametersSetAsync" + firstRender);
+    ////    await base.OnAfterRenderAsync(firstRender);
+    ////}
+    //protected override bool ShouldRender()
+    //{
+    //    Console.WriteLine("Authors - OnParametersSetAsync");
+    //    return true;
+
+    //}
+    public void Dispose()
+    {
+        Console.WriteLine("Author - Disposed");
+    }
+
+
+    #endregion
+
+
+    #region Saving Authors
+    public async Task SaveAuthor()
+    {
+        //Result = authorService.SaveAuthor(author);
+        
+
+        if (author.AuthorId == 0)
+        {
+            await AuthorApiService.PostAuthor(author);//API to post to database
+        }
+        else
+        {
+            await AuthorApiService.EditAuth(author, author.AuthorId);//API to post to database
+        }
+
+        await LoadAuthors();
+
+        Result = true;//temporarily, it sud be equal to d service as above
+        IsVisible = true;
+
+        var firstName = author.FirstName;
+        var lastName = author.LastName;
+        RecordName = firstName + " " + lastName;// This will den be passed as html fragment to the child Component at the top
+        author = new Author();
+
+
+        // await JSRuntime.InvokeVoidAsync("saveMessage",firstName,lastName); now using Reusable component
+
+        //For HtmlInput Focus
+        await JSRuntime.InvokeVoidAsync("setFocusOnElement", firstNameText);
+    }
+    #endregion
+
+
+    private async Task LoadAuthors()
+    {
+        AuthorList = await AuthorApiService.GetAuthors();
+        AuthorList = AuthorList.OrderByDescending(auth => auth.AuthorId).ToList();
+
+        //if (AuthorList == null)
+        //{
+        //    RefreshRequest refreshRequest = new RefreshRequest();
+        //    refreshRequest.AccessToken = await sessionStorage.GetItemAsync<string>("accessToken");
+        //    refreshRequest.RefreshToken = await sessionStorage.GetItemAsync<string>("refreshToken");
+
+        //    var user1 = await userApiService.RefreshToken(refreshRequest);
+        //    await sessionStorage.SetItemAsync("accessToken", user1.AccessToken);
+
+        //    AuthorList = await autourApiService.GetAuthors();
+        //    AuthorList = AuthorList.OrderByDescending(auth => auth.AuthorId).ToList();
+        //}
+
+        StateHasChanged();//This will rerender the page
+    }
+
+
+
+    #region Fetching Cities from Javascript
+
+    //This has been sent to reusable component called SelectCity in order to be reused in other components and avoid often rerendering of page
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    if (firstRender && Cities == null)
+    //    {
+    //        Cities = await JSRuntime.InvokeAsync<string[]>("getCities");
+
+    //        StateHasChanged();
+    //    }
+    //}
+
+    #endregion
+
+
+    private async Task DeleteAuthor(int id)
+    {
+        await AuthorApiService.DeleteAuth(id);
+
+        await LoadAuthors();
+    }
+
+    private void EditAuthor(Author authorArg)
+    {
+        author = authorArg;
+    }
+
+
+}

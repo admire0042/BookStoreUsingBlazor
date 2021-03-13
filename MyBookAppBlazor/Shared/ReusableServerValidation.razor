@@ -1,0 +1,60 @@
+﻿@*Only dispay the message if this condition is met*@
+
+@if (IsVisible)
+{
+    if (Result)
+    {
+        <div id="divServerValidationss" class="col-10 alert alert-info">
+            <div class="col-11" style="text-align:left">
+                <span>@ChildContent has been saved successfully</span>
+            </div>
+            <div class="col-11" style="text-align:right">
+                <a style="text-underline-position:below; cursor:pointer" @onclick="(() => closeValidation())">x</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        //in case Something goes wrong in database or internet issue while saving
+
+        <div id="divServerValidationss" class="col-10 alert alert-danger">
+            <div class="col-11" style="text-align:left">
+                <span style="font-weight:bold; font-style:italic">OOps, Something has gone wrong, plese contact system admin </span>
+            </div>
+            <div class="col-11" style="text-align:right">
+                <a style="text-underline-position:below; cursor:pointer" @onclick="(() => closeValidation())">x</a>
+            </div>
+        </div>
+
+    }
+
+}
+
+
+
+@code{
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; } //this name must always be ChildContent, otherwise it wont work
+
+    [Parameter]
+    public bool Result { get; set; }
+
+    private void closeValidation()//used for deleting the message
+    {
+        IsVisible = false;
+    }
+
+
+
+    ////This is just for testing
+    //protected override async Task OnParametersSetAsync() //Note: this works fro showing the error message as soon as u enter d page, it should be enabled if we have the CheckConnection method from services working, so im commenting it for now
+    //{
+    //    Result = false; //authorService.CheckConnection();
+
+    //    IsVisible = true;
+    //    await base.OnParametersSetAsync();
+    //}
+}
